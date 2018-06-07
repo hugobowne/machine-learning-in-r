@@ -1,8 +1,6 @@
 ---
 title: "Single cell mouse RNA-seq classification"
-output:
-  html_document:
-    df_print: paged
+output:html_document
 ---
 Load libraries
 ```{r}
@@ -11,17 +9,21 @@ library(caret, suppressWarnings(TRUE))
 
 Load data
 ```{r}
-mouse_data <- read.table("mouse_data.csv", sep = ",", header = TRUE)
+file_url <- "https://raw.github.com/hugobowne/machine-learning-in-r/rna_example/mouse_data.csv.gz"
+temp <- tempfile()
+download.file(file_url, temp)
+df <- read.table(gzfile(temp), sep = ",", header = TRUE)
+unlink(temp)
 ```
 
 Delete first column which contain ids
 ```{r}
-mouse_data <- mouse_data[,-1]
+df <- df[,-1]
 ```
 
 Explore data set
 ```{r}
-dim(mouse_data)
+dim(df)
 ```
 
 As you can see, it's quite a large data set. There are 3,005 samples each with 19,976 variables. This means the dataframe has 60,027,880 cells! A set this big will not only slow down computation, but it may also cause a memory overflow. Performing a dimentionality reduction (such as PCA) may solve this problem.
@@ -33,9 +35,9 @@ set.seed(333)
 
 Split into train and test sets
 ```{r}
-inTraining <- createDataPartition(mouse_data$level1class, p=.75, list = FALSE)
-df_train <- mouse_data[ inTraining,]
-df_test <- mouse_data[-inTraining,]
+inTraining <- createDataPartition(df$level1class, p=.75, list = FALSE)
+df_train <- df[ inTraining,]
+df_test <- df[-inTraining,]
 ```
 
 Pre-process data
