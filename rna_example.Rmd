@@ -1,0 +1,92 @@
+---
+title: "Single cell mouse RNA-seq classification"
+output:
+  html_document:
+    df_print: paged
+---
+Load libraries
+```{r}
+library(caret, suppressWarnings(TRUE))
+```
+
+Load data
+```{r}
+mouse_data <- read.table("mouse_data.csv", sep = ",", header = TRUE)
+```
+
+Delete first column which contain ids
+```{r}
+mouse_data <- mouse_data[,-1]
+```
+
+Explore data set
+```{r}
+dim(mouse_data)
+```
+
+As you can see, it's quite a large data set. There are 3,005 samples each with 19,976 variables. This means the dataframe has 60,027,880 cells! A set this big will not only slow down computation, but it may also cause a memory overflow. Performing a dimentionality reduction (such as PCA) may solve this problem.
+
+Set random seed to achieve reproducible results
+```{r}
+set.seed(333)
+```
+
+Split into train and test sets
+```{r}
+inTraining <- createDataPartition(mouse_data$level1class, p=.75, list = FALSE)
+df_train <- mouse_data[ inTraining,]
+df_test <- mouse_data[-inTraining,]
+```
+
+Pre-process data
+```{r}
+# the target variable is level1class in column #3, so we don't want to modify that variable
+ppv <- preProcess(df_train[,-3], method = c("center", "scale", "pca", "nzv"))
+transformed_train <- predict(ppv, newdata = df_train)
+transformed_test <- predict(ppv, newdata = df_test)
+```
+
+Let's compare the original training set with the transformed one.
+```{r}
+dim(df_train)
+format(object.size(df_train), units = "Mb")
+dim(transformed_train)
+format(object.size(transformed_train), units = "Mb")
+```
+
+Training the KNN model with cross validation and 5 resampling iterations.
+```{r}
+knn_fit <- train(level1class ~., data = transformed_train, method = "knn",
+                 trControl=trainControl(method = "cv", number = 5),
+                 tuneLength = 5)
+```
+
+Print the training results
+```{r}
+knn_fit
+```
+
+The highest accuracy was achieved when $k=5$. We can also plot the variation in accuracy with respect to $k$.
+```{r}
+plot(knn_fit)
+```
+
+Now let's validate the model using the test set. First, we'll use the model we constructed in the previous step to make the classification predictions in our training set.
+```{r}
+test_pred <- predict(knn_fit, newdata = transformed_test)
+```
+
+Finally, we compare our predictions with the original labels.
+
+```{r}
+confusionMatrix(test_pred, transformed_test$level1class)
+```
+
+We mentioned earlier that a data set large data set might cause problems in computation. In this particular case, if we try training the model with the unreduced training set, there is a memory overflow.
+```{r}
+knn_fit <- train(level1class ~., data = df_train, method = "knn",
+                 trControl=trainControl(method = "cv", number = 5),
+                 preProcess = c("center", "scale", "nzv"),
+                 tuneLength = 5)
+```
+
