@@ -16,6 +16,8 @@ output:
 #install.packages("caret")
 #install.packages("GGally")
 #install.packages("gmodels")
+#install.packages("glmnet", repos = "http://cran.us.r-project.org")
+
 
 # Load packages
 library(tidyverse)
@@ -24,6 +26,7 @@ library(ddalpha)
 library(caret)
 library(GGally)
 library(gmodels)
+library(glmnet)
 ```
 
 
@@ -104,7 +107,7 @@ Another form of *unsupervised learning*, is _dimensionality reduction_: in the b
 
 Principal component analysis  will extract the features with the largest variance. Here let's take the 1st 2 principal components and plot them, colored by tumour diagnosis.
 
-Aside: *Supervised learning*, which we'll get to soone enough, is the branch of machine learning that involves predicting labels, such as whether a tumour will be *benign* or *malignant*.
+Aside: *Supervised learning*, which we'll get to soon enough, is the branch of machine learning that involves predicting labels, such as whether a tumour will be *benign* or *malignant*.
 
 
 ```{r}
@@ -139,7 +142,7 @@ CrossTable(df$X2, km.out$cluster)
 **Discussion:** How well did the k-nearest neighbors do at clustering the tumor data?
 
 
-## Supervised Learning
+## Supervised Learning I: classification
 
 Try to predict diagnosis based on geometrical measurements.
 
@@ -271,6 +274,103 @@ And plot the results:
 ```{r}
 plot(rf_random)
 ```
+
+## Supervised Learning I: regression
+
+In the classification task above, we were attempting to predict a categorical outcome, in this case 'benign' or 'malignant'. Regression, the other type of supervised learning task, is one in which you're attempting to predict a contiuously varying outcome, such as the price of a house or life expectancy.
+
+```{r}
+gm <- read_csv("https://s3.amazonaws.com/assets.datacamp.com/production/course_2433/datasets/gapminder-clean.csv")
+gm %>% head()
+```
+```{r}
+ggplot(gm, aes(x=fertility, y=life)) + geom_point()
+```
+
+
+
+```{r}
+mod <- lm(life~fertility, gm)
+pred <- predict(mod, gm)
+```
+
+```{r}
+{plot(gm$fertility, gm$life)
+abline(mod)}
+```
+
+
+
+### Compute error
+
+```{r}
+er <- pred - gm$life
+rmse <- mean(er^2)
+rmse
+```
+Now you do the above for the full model:
+
+```{r}
+mod_full <- lm(life~., gm)
+pred_full <- predict(mod_full, gm)
+er_full <- pred_full - gm$life
+rmse_full <- mean(er_full^2)
+rmse_full
+```
+
+
+Whoa but maybe we overfitted?
+
+Again: train test split it up.
+
+```{r}
+# Set seed for reproducible results
+set.seed(42)
+# Train test split
+inTraining <- createDataPartition(gm$life, p = .75, list=FALSE)
+# Create train set
+gm_train <- gm[ inTraining,]
+# Create test set
+gm_test <- gm[-inTraining,]
+# Fit model to train set
+model <- lm(life ~ ., gm_train)
+# Predict on test set
+p <- predict(model, gm_test)
+
+#
+er <- pred - gm$life
+rmse <- mean(er^2)
+rmse
+```
+
+
+```{r}
+x = as.matrix(subset(gm, select=-life))
+y = gm$life
+fit = glmnet(x, y)
+plot(fit, label=TRUE)
+```
+
+
+
+###
+
+```{r}
+cvfit = cv.glmnet(x, y, alph=1)
+print(cvfit$lambda.min)
+plot(cvfit)
+```
+
+### Feature selection using lasso regression
+
+```{r}
+x = as.matrix(subset(gm, select=-life))
+y = gm$life
+fit = glmnet(x, y, alpha=1)
+plot(fit, label=TRUE)
+```
+
+https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html
 
 ### What we can discuss adding
 
