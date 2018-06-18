@@ -7,10 +7,10 @@ output:
 
 ## Introductory words
 
-This is an Introduction to Machine Learning in R, in which you'll learn the basic of unsupervised learning for _pattern recognition_ and supervised learning for _prediction_. At the end of this workshop, we hope that you'll
+This is an Introduction to Machine Learning in R, in which you'll learn the basics of unsupervised learning for _pattern recognition_ and supervised learning for _prediction_. At the end of this workshop, we hope that you'll
 
 * appreciate the importance of performing exploratory data analysis (or EDA) before starting to model your data.
-* understand the basic of _unsupervised learning_ and know the examples of principal component analysis (PCA) and k-means clustering.
+* understand the basics of _unsupervised learning_ and know the examples of principal component analysis (PCA) and k-means clustering.
 * understand the basics of _supervised learning_ for prediction and the differences between _classification_ and _regression_.
 * understand modern machine learning techniques and principles, such as test train split, k-fold cross validation and regularization.
 * be able to write code to implement the above techniques and methodologies using R, caret and glmnet.
@@ -70,11 +70,11 @@ df %>% head()
 
 Before thinking about modeling, have a look at your data. There's no point in throwing a $10^4$ layer convolutional neural network (whatever that means) at your data before you even know what you're dealing with.
 
-You'll first remove the column, which is the unique identifier of each row:
+You'll first remove the first column, which is the unique identifier of each row:
 
 ```{r}
 # Remove first column 
-df <- df[2:31]
+df <- df[2:32]
 # View head
 df %>% head()
 ```
@@ -84,6 +84,7 @@ df %>% head()
 **Discussion:** Why did we want to remove the unique identifier?
 
 Now there are too many features to plot so you'll plot the first 5 in a pair-plot:
+# does this mean we're getting rid of features, or that we'll only plot the first five as opposed to the 32
 
 ```{r}
 # Pair-plot of first 5 features
@@ -93,7 +94,9 @@ ggpairs(df[1:5], aes(colour=X2, alpha=0.4))
 
 **Discussion:** What can you see here?
 
-Note that the features have widely varying centers and scales (means and standard deviations) so we'll want center and scale them in some situations. You'll use the caret package for this and you can read more about preprocessing with caret [here](https://topepo.github.io/caret/pre-processing.html#pp).
+Note that the features have widely varying centers and scales (means and standard deviations) so we'll want to center and scale them in some situations. You'll use the caret package for this. You can read more about preprocessing with caret [here](https://topepo.github.io/caret/pre-processing.html#pp).
+<!-- it is not entirely clear why it's necessary to perform scaling and centering.
+perhaps briefly mention the other situations when center and scaling is not necessary? --> 
 
 ```{r}
 # Center & scale data
@@ -120,14 +123,14 @@ ggpairs(df_tr[1:5], aes(colour=X2))
 
 *Unsupervised learning*, in essence, is the machine learning task of uncovering hidden patterns and structures from unlabeled data. For example, a business may wish to group its customers into distinct categories based on their purchasing behavior without knowing in advance what these categories maybe. This is known as clustering, one branch of unsupervised learning.
 
-Another form of *unsupervised learning*, is _dimensionality reduction_: in the breast cancer dataset, for example, there are too many features to keep track of. What if we could reduced the number of features yet still keep much of the information? 
-
-**Discussion:** Look at features X3 and X5. Do you think that we could reduce them to one feature and keep much of the information?
-
-
-Principal component analysis  will extract the features with the largest variance. Here let's take the 1st 2 principal components and plot them, colored by tumour diagnosis.
-
 Aside: *Supervised learning*, which we'll get to soon enough, is the branch of machine learning that involves predicting labels, such as whether a tumour will be *benign* or *malignant*.
+
+Another form of *unsupervised learning*, is _dimensionality reduction_: in the breast cancer dataset, for example, there are too many features to keep track of. What if we could reduce the number of features yet still keep much of the information? 
+
+**Discussion:** Look at features X3 and X5. Do you think we could reduce them to one feature and keep much of the information?
+
+
+Principal component analysis  will extract the features with the largest variance. Here let's take the first two principal components and plot them, coloured by tumour diagnosis.
 
 
 ```{r}
@@ -143,11 +146,11 @@ ggplot(df_pc, aes(x = PC1, y = PC2, colour = X2)) + geom_point()
 1. The first step of PCA is to decorrelate your data and this corresponds to a linear transformation of the vector space your data lie in;
 2. The second step is the actual dimension reduction; what is really happening is that your decorrelation step (the first step above) transforms the features into new and uncorrelated features; this second step then chooses the features that contain most of the information about the data (you'll formalize this soon enough).
 
-You can essentially think about PCA as a form of compression and you can read more about PCA [here](https://www.datacamp.com/community/tutorials/data-science-techniques-dataframed#pca).
+You can essentially think about PCA as a form of compression. You can read more about PCA [here](https://www.datacamp.com/community/tutorials/data-science-techniques-dataframed#pca).
 
-## Unsupervised Learning II: Clustering
+## Unsupervised Learning II: clustering
 
-One popular technique in unsupervised learning is _clustering_. Essentially, this is the task of grouping your data points, based on something about them, such as closeness in space. What you're going to do is group the tumour data points into two clusters using an algorithm called k-means, which aims to cluster the data in in order to minimize the variances of the clusters.
+One popular technique in unsupervised learning is _clustering_. Essentially, this is the task of grouping your data points, based on something about them, such as closeness in space. What you're going to do is group the tumour data points into two clusters using an algorithm called k-means, which aims to cluster the data in order to minimize the variances of the clusters.
 
 Cluster your data points using k-means and then we'll compare the results to the actual labels that we know:
 
@@ -158,7 +161,7 @@ summary(km.out)
 km.out$cluster
 ```
 
-Now that you have a cluster for each tumour (clusters 1 and 2), you can see how well they coincide with the labels that you know. To do this you'll use a cool method called cross-tabulation: a cross-tab is a table that allows you to read off how many data points in clusters 1 and 2 were actually benign or malignant. respectively.
+Now that you have a cluster for each tumour (clusters 1 and 2), you can see how well they coincide with the labels that you know. To do this you'll use a cool method called cross-tabulation: a cross-tab is a table that allows you to read off how many data points in clusters 1 and 2 were actually benign or malignant respectively.
 
 Let's do it:
 
@@ -240,7 +243,8 @@ confusionMatrix(as.factor(pred), df$X2)
 _Also_, don't worry about the warnings. See [here for why](https://stackoverflow.com/questions/8596160/why-am-i-getting-algorithm-did-not-converge-and-fitted-prob-numerically-0-or).
 
 
-_BUT_ this is the accuracy on the data that you trained the model on. This is not necessarily indicative of how the model will generalize to a dataset that it has never seen before, which is the purpose of building such models. For this reason, it is common to use a process called train test split to train the model on a subset of your data and then to compute the accuracy on the test set.
+_BUT_ this is the accuracy on the data that you trained the model on. This is not necessarily indicative of how the model will generalize to a dataset that it has never seen before, which is the purpose of building such models. For this reason, it is common to use a process called _train test split_ to train the model on a subset of your data and then to compute the accuracy on the test set.
+<!-- mention overfitting? --> 
 
 ```{r}
 # Set seed for reproducible results
@@ -264,9 +268,10 @@ confusionMatrix(as.factor(pred), df_test$X2)
 
 ### Random Forests
 
-This caret API is so cool you can use it for lots of models. You'll build random forests below. Before describing random forests, you'll need to know a bit about decision tree classifiers. It is a tree that allows you to classify data points (also known as "target variables", for example, benign or malignant tumor) based on feature variables (such as geometric measurements of tumors). See [here](http://res.cloudinary.com/dyd911kmh/image/upload/f_auto,q_auto:best/v1519834394/bc_fdf2rr.png) for an example. The depth of the tree is known as a hyperparameter, which means a parameter you need to decide before you fit the model to the data. You can read more about decision trees [here](https://www.datacamp.com/community/tutorials/kaggle-tutorial-machine-learning). A _random forest_ is a collection of decision trees that fits different decision trees with different subsets of the data and gets them to vote on the label. This provides intuition behind random forests and you can find more technical details [here](https://en.wikipedia.org/wiki/Random_forest).
+This caret API is so cool you can use it for lots of models. You'll build random forests below. Before describing random forests, you'll need to know a bit about decision tree classifiers. Decision trees allow you to classify data points (also known as "target variables", for example, benign or malignant tumor) based on feature variables (such as geometric measurements of tumors). See [here](http://res.cloudinary.com/dyd911kmh/image/upload/f_auto,q_auto:best/v1519834394/bc_fdf2rr.png) for an example. The depth of the tree is known as a _hyperparameter_, which means a parameter you need to decide before you fit the model to the data. You can read more about decision trees [here](https://www.datacamp.com/community/tutorials/kaggle-tutorial-machine-learning). A _random forest_ is a collection of decision trees that fits different decision trees with different subsets of the data and gets them to vote on the label. This provides intuition behind random forests and you can find more technical details [here](https://en.wikipedia.org/wiki/Random_forest). 
+<!-- Definition of random forest is a bit confusing to me.  --> 
 
-Before you build your first random forest, there's a pretty cool alternative to train test split called k-fold cross validation that we'll look into.
+Before you build your first random forest, there's a pretty cool alternative to train test split called _k-fold cross validation_ that we'll look into.
 
 
 #### Cross Validation
@@ -277,7 +282,7 @@ We begin by splitting the dataset into 5 groups or _folds_ (see [here](http://re
 
 As a result we get five values of accuracy, from which we can compute statistics of interest, such as the median and/or mean and 95% confidence intervals.
 
-We do this for each value of each hyperparameter that we're tuning and choose the set of hyperparameters that performs the best. This is called _grid search_ if we specify the hyperparameter values we wish to try and called _random search_, which searched randomly through the hyperparameter space (see more [here](http://topepo.github.io/caret/random-hyperparameter-search.html)).
+We do this for each value of each hyperparameter that we're tuning and choose the set of hyperparameters that performs the best. This is called _grid search_ if we specify the hyperparameter values we wish to try, and called _random search_ if we search randomly through the hyperparameter space (see more [here](http://topepo.github.io/caret/random-hyperparameter-search.html)).
 
 You'll first build a random forest with a grid containing 1 hyperparameter to get a feel for it.
 
@@ -308,9 +313,9 @@ And plot the results:
 plot(rf_random)
 ```
 
-## Supervised Learning I: regression
+## Supervised Learning II: regression
 
-In the classification task above, we were attempting to predict a categorical outcome, in this case 'benign' or 'malignant'. Regression, the other type of supervised learning task, is one in which you're attempting to predict a continuously varying outcome, such as the price of a house or life expectancy.
+In the classification task above, we were attempting to predict a categorical outcome, in this case 'benign' or 'malignant'. Regression, the other type of supervised learning, is one in which you're attempting to predict a continuously varying outcome, such as the price of a house or life expectancy.
 
 ```{r}
 gm <- read_csv("data/gapminder.csv") 
@@ -393,9 +398,9 @@ rmse <- sqrt(mean(er^2))
 rmse
 ```
 
-## Supervised Learning II: regularized regression
+## Supervised Learning III: regularized regression
 
-When performing linear regression, instead of minimizing the MSE, you can add other constraints that will stop the model parameters from shooting up too high. Lasso regression and ridge regression are examples of these. Your instructor will write several equations on the board to explain these constraints and all the necessary information is also in [this glmnet vignette](https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html). You'll use the glmnet package to fit a lasso regression to the data:
+When performing linear regression, instead of minimizing the MSE, you can add other constraints that will stop the model parameters from shooting up too high. Lasso regression and ridge regression are a few examples. Your instructor will write several equations on the board to explain these constraints and all the necessary information is also in [this glmnet vignette](https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html). You'll use the glmnet package to fit a lasso regression to the data:
 
 
 ```{r}
@@ -419,7 +424,7 @@ plot(cvfit)
 
 ### Feature selection using lasso regression
 
-One great of aspect of lasso regression is that it can be used for automatic feature selection. Once you have used k-fold CV to find the best lambda, you can look at the coefficients of each variable (for that value of lambda) and the variables with the largest coefficients are the ones to select.
+One great aspect of lasso regression is that it can be used for automatic feature selection. Once you have used k-fold CV to find the best lambda, you can look at the coefficients of each variable (for that value of lambda) and the variables with the largest coefficients are the ones to select.
 
 
 
