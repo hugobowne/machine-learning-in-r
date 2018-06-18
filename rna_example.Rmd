@@ -1,6 +1,8 @@
 ---
 title: "Single cell mouse RNA-seq classification"
-output:html_document
+output:
+  html_document:
+    df_print: paged
 ---
 Load libraries
 ```{r}
@@ -85,7 +87,7 @@ confusionMatrix(test_pred, transformed_test$level1class)
 ```
 
 We mentioned earlier that a data set large data set might cause problems in computation. In this particular case, if we try training the model with the unreduced training set, there is a memory overflow.
-```{r}
+```{r error=TRUE}
 knn_fit <- train(level1class ~., data = df_train, method = "knn",
                  trControl=trainControl(method = "cv", number = 5),
                  preProcess = c("center", "scale", "nzv"),
