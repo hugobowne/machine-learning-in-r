@@ -4,6 +4,8 @@ output:
   html_document:
     df_print: paged
 ---
+For this exercise, we will be using large-scale single-cell RNA-seq obtained from mouse tissue from http://science.sciencemag.org/content/early/2015/02/18/science.aaa1934
+
 Load libraries
 ```{r}
 library(caret, suppressWarnings(TRUE))
@@ -27,6 +29,20 @@ Explore data set
 ```{r}
 dim(df)
 ```
+
+This dataset consists of 3,005 samples, with one target variable and 19,975 predictor variables. To examine the columns, run
+
+```{r}
+colnames(df)
+```
+
+The majority of the columns represent gene names In this dataset, the target variable is _level1class_, which represents the cell type the sample belongs to. To see the possible classes, run
+
+```{r}
+levels(df$level1class)
+```
+ 
+Age, tissue, diameter
 
 As you can see, it's quite a large data set. There are 3,005 samples each with 19,976 variables. This means the dataframe has 60,027,880 cells! A set this big will not only slow down computation, but it may also cause a memory overflow. Performing a dimentionality reduction (such as PCA) may solve this problem.
 
